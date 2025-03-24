@@ -1,29 +1,36 @@
-import requests
-import json
+import yfinance as yf
 
 def fetch_stock_data():
-    API_KEY = " H6YPXCNTFQDIXJHA"  # Replace with your actual API key
-    BASE_URL = "https://www.alphavantage.co/query"
-    STOCKS = ["ETH", "AMZN", "GOOG", "TSLA"]
+    STOCKS = {
+        "ETH": "ETH-USD",
+        "BTC": "BTC-USD",
+        "AMZN": "AMZN",
+        "GOOG": "GOOG",
+        "TSLA": "TSLA",
+        "AAPL": "AAPL"
+    }
     
     stock_prices = {}
-    
-    for stock in STOCKS:
-        params = {
-            "function": "TIME_SERIES_DAILY",
-            "symbol": stock,
-            "apikey": API_KEY
-        }
-        
-        response = requests.get(BASE_URL, params=params)
-        data = response.json()
-        
-        if "Time Series (Daily)" in data:
-            time_series = data["Time Series (Daily)"]
-            closing_prices = [float(time_series[date]["4. close"]) for date in sorted(time_series.keys(), reverse=True)[:7]]
-            stock_prices[stock] = closing_prices
-        else:
-            print(f"Error fetching data for {stock}: {data}")
+
+    for ticker, yahoo_symbol in STOCKS.items():
+        try:
+            # Fetch last 14 days of data to ensure at least 7 trading days
+            data = yf.download(yahoo_symbol, period="14d", interval="1d", auto_adjust=True)
+
+            if data.empty:
+                print(f"Error: No data found for {ticker}")
+                continue
+            
+            # Ensure 'Close' is a Series (not DataFrame) before converting to a list
+            closing_prices = data[["Close"]].squeeze().dropna().tolist()
+
+            if len(closing_prices) >= 7:
+                stock_prices[ticker] = closing_prices[-7:]  # Get last 7 available days
+                print(f"✅ Fetched data for {ticker}: {stock_prices[ticker]}")
+            else:
+                print(f"⚠️ Error: Not enough trading data for {ticker}, only {len(closing_prices)} values available.")
+
+        except Exception as e:
+            print(f"❌ Error fetching data for {ticker}: {e}")
     
     return stock_prices
-

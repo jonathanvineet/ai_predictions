@@ -23,28 +23,35 @@ def generate_insights(sharpe_ratio):
         return "Low risk-adjusted return. Consider investing cautiously."
     else:
         return "Negative Sharpe Ratio! Poor risk-adjusted return, indicating high volatility or losses."
-
 def allocate_funds(stock_data, total_investment):
     """
-    Allocate investment across three stocks based on their Sharpe Ratios.
-    
+    Allocate investment across stocks based on their Sharpe Ratios and predicted price growth.
+   
     stock_data: List of dictionaries containing past prices, current and predicted values.
     total_investment: Total amount to be invested.
     """
     sharpe_ratios = []
     insights = []
-    
-    for i, stock in enumerate(stock_data):
+   
+    for stock in stock_data:
         log_returns = calculate_log_returns(stock["past_prices"])
         sharpe = calculate_sharpe_ratio(log_returns)
-        sharpe_ratios.append(max(0, sharpe))  # Avoid negative allocations
-        insights.append(f"Stock {i+1}: Sharpe Ratio = {sharpe:.2f} → {generate_insights(sharpe)}")
+        sharpe_ratios.append(max(0.01, sharpe))  # Avoid zero allocation
+        insights.append(f"{stock['company_name']}: Sharpe Ratio = {sharpe:.2f} → {generate_insights(sharpe)}")
 
-    # Normalize Sharpe Ratios
+    # If Sharpe Ratios are too similar, use price growth for allocation
     sharpe_sum = sum(sharpe_ratios)
-    weights = [s / sharpe_sum if sharpe_sum > 0 else 1/3 for s in sharpe_ratios]
+    if sharpe_sum < 0.1:  # Threshold to avoid equal distribution
+        predicted_growth = [
+            max(0.01, (stock["predicted_price"] - stock["current_price"]) / stock["current_price"])
+            for stock in stock_data
+        ]
+        growth_sum = sum(predicted_growth)
+        weights = [g / growth_sum for g in predicted_growth] if growth_sum > 0 else [1/len(stock_data)] * len(stock_data)
+    else:
+        weights = [s / sharpe_sum for s in sharpe_ratios]
 
     # Allocate funds
     allocations = [round(w * total_investment, 2) for w in weights]
-
+   
     return allocations, insights

@@ -86,8 +86,8 @@ def home():
     </pre>
     '''
 host = "0.0.0.0"
-port = 5000
-app.run(debug=True, host='0.0.0.0', port=5000)
+port = 5001
+app.run(debug=True, host='0.0.0.0', port=5001)
 local_ip = socket.gethostbyname(socket.gethostname())
 print(f"Server running on: http://{local_ip}:{port}")
 serve(app, host=host, port=port)
