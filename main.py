@@ -16,7 +16,9 @@ def analyze_stocks(stock_prices, total_investment=10000):
         "ETH": "ethereum",
         "AMZN": "amazon",
         "GOOG": "google",
-        "TSLA": "tesla"
+        "TSLA": "tesla",
+        "AAPL": "apple",
+        "BTC": "bitcoin"
     }
 
     stock_data = []
